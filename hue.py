@@ -24,7 +24,7 @@ class Hue(NeuronModule):
         if self._is_parameters_ok():
             # connect to the bridge
             self.b = Bridge(self.bridge_ip)
-
+            # TODO switch to a list of group instead of unique group name
             if self.group_name is not None:
                 # get all groups
                 groups = self.b.get_group()
@@ -36,6 +36,7 @@ class Hue(NeuronModule):
                     for light_id in lights_ids:
                         self.switch_light(int(light_id))
 
+            # TODO switch to a list of light name instead of unique name
             if self.light_name is not None:
                 # get the id of the target light by its name
                 light = self.b.get_light(self.light_name)
@@ -54,6 +55,11 @@ class Hue(NeuronModule):
         # user must set a group name of a light name
         if self.group_name is None and self.light_name is None:
             raise MissingParameterException("Hue neuron needs at least a group name or a light name")
+
+        # user cannot use both group name and light name
+        if self.group_name is not None and self.light_name is not None:
+            raise InvalidParameterException(
+                "Hue neuron cannot be used with both group_name and light_name")
 
         # test state ok
         if self.state is None:
