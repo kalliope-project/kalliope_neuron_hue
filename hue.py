@@ -15,8 +15,8 @@ class Hue(NeuronModule):
         super(Hue, self).__init__(**kwargs)
 
         self.bridge_ip = kwargs.get('bridge_ip', None)
-        self.group_name = kwargs.get('group_name', None)
-        self.light_name = kwargs.get('light_name', None)
+        self.groups_name = kwargs.get('groups_name', None)
+        self.lights_name = kwargs.get('lights_name', None)
         self.state = kwargs.get('state', None)
         self.brightness = kwargs.get('brightness', None)
 
@@ -24,24 +24,25 @@ class Hue(NeuronModule):
         if self._is_parameters_ok():
             # connect to the bridge
             self.b = Bridge(self.bridge_ip)
-            # TODO switch to a list of group instead of unique group name
-            if self.group_name is not None:
+
+            if self.groups_name is not None:
                 # get all groups
                 groups = self.b.get_group()
-                # get the group id from the name
-                lights_ids = self._get_lights_id_by_from_group_name(groups, self.group_name)
-                # switch status of each light in the group depending on the state
-                logger.debug("Lights id: %s" % lights_ids)
-                if lights_ids is not None:
-                    for light_id in lights_ids:
-                        self.switch_light(int(light_id))
+                for group_name in self.groups_name:
+                    # get all lights id from in the target group name
+                    lights_ids = self._get_lights_id_by_from_group_name(groups, group_name)
+                    # switch status of each light in the group depending on the state
+                    logger.debug("Lights id: %s" % lights_ids)
+                    if lights_ids is not None:
+                        for light_id in lights_ids:
+                            self.switch_light(int(light_id))
 
-            # TODO switch to a list of light name instead of unique name
-            if self.light_name is not None:
-                # get the id of the target light by its name
-                light = self.b.get_light(self.light_name)
-                if light is not None:
-                    self.switch_light(self.light_name)
+            if self.lights_name is not None:
+                for light_name in self.lights_name:
+                    # get the id of the target light by its name
+                    light = self.b.get_light(light_name)
+                    if light is not None:
+                        self.switch_light(light["name"])
 
     def _is_parameters_ok(self):
         # test bridge ip is set
@@ -53,13 +54,18 @@ class Hue(NeuronModule):
         ipaddress.ip_address(bridge_ip_unicode)
 
         # user must set a group name of a light name
-        if self.group_name is None and self.light_name is None:
+        if self.groups_name is None and self.lights_name is None:
             raise MissingParameterException("Hue neuron needs at least a group name or a light name")
 
-        # user cannot use both group name and light name
-        if self.group_name is not None and self.light_name is not None:
-            raise InvalidParameterException(
-                "Hue neuron cannot be used with both group_name and light_name")
+        # test group name or lights are a list
+        if self.groups_name is not None:
+            if not isinstance(self.groups_name, list):
+                raise InvalidParameterException(
+                    "Hue neuron:  groups_name must be a list")
+        if self.lights_name is not None:
+            if not isinstance(self.lights_name, list):
+                raise InvalidParameterException(
+                    "Hue neuron:  groups_name must be a list")
 
         # test state ok
         if self.state is None:
@@ -103,4 +109,19 @@ class Hue(NeuronModule):
         :param light_identifier: ID or name of the light
         """
         logger.debug("HUE: Switching light %s to state %s" % (light_identifier, self.state))
-        self.b.set_light(light_identifier, 'on', self._get_boolean_from_state(self.state))
+        boolean_state = self._get_boolean_from_state(self.state)
+        self.b.set_light(light_identifier, 'on', boolean_state)
+        if boolean_state and self.brightness is not None:
+            brightness_number = self.get_brightness_number_from_percent(self.brightness)
+            print brightness_number
+            self.b.set_light(light_identifier, 'bri', brightness_number)
+
+    @staticmethod
+    def get_brightness_number_from_percent(brightness_percent):
+        """
+        The phue lib wants a number between 0 and 254. The neuron ask for a percent between 0 and 100.
+        We need to convert
+        :param brightness_percent: integer between 0 and 100
+        :return:
+        """
+        return int(round((254 * int(brightness_percent))/100))
