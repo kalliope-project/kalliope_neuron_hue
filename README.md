@@ -13,6 +13,12 @@ kalliope install --git-url https://github.com/kalliope-project/kalliope_neuron_h
 
 Before being able to use the neuron, you must establish an initial connection with your bridge in order to allow Kalliope to interact with it.
 To do that, run the python script and follow instructions. This only needs to be run a single time.
+
+You need to give the IP of your bridge as argument.  to discover the IP address of the bridge on your network. You can do this in a few ways:
+1. Use a UPnP discovery app to find Philips hue in your network.
+1. Log into your router and look Philips hue up in the DHCP table.
+1. Via the Hue App into Network settings.
+
 ```bash
 cd /path/to/your/resource_dir/neurons/hue
 python bind_hue_bridge.py --ip <bridge_ip>
