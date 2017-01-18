@@ -12,10 +12,15 @@ kalliope install --git-url https://github.com/kalliope-project/kalliope_neuron_h
 ```
 
 Before being able to use the neuron, you must establish an initial connection with your bridge in order to allow Kalliope to interact with it.
-To do that, run the python script and follow instructions
+To do that, run the python script and follow instructions. This only needs to be run a single time.
 ```bash
 cd /path/to/your/resource_dir/neurons/hue
-python bind_hue_bridge.py
+python bind_hue_bridge.py --ip <bridge_ip>
+```
+E.g:
+```bash
+cd /path/to/your/resource_dir/neurons/hue
+python bind_hue_bridge.py --ip 192.168.0.7
 ```
 
 ## Options
@@ -90,9 +95,6 @@ And the same synapse with state set to "off" can be used to turn off our lights.
 ## Notes
 
 > **Note:** Your Kalliope installation must be placed on a device which is in the same network as the HUE bridge.
-
-> **Note:** The binding between the bridge and Kalliope is based on the IP address. It means that the device that host Kalliope should not changes its IP address.
-Consider the usage of a static IP or a DHCP reservation to be sure you will never change the IP address.
 
 ## Licence
 
