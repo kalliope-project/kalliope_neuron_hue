@@ -17,6 +17,8 @@ class Hue(NeuronModule):
         self.bridge_ip = kwargs.get('bridge_ip', None)
         self.groups_name = kwargs.get('groups_name', None)
         self.lights_name = kwargs.get('lights_name', None)
+        self.group_name = kwargs.get('group_name', None)
+        self.light_name = kwargs.get('light_name', None)
         self.state = kwargs.get('state', None)
         self.brightness = kwargs.get('brightness', None)
 
@@ -25,9 +27,10 @@ class Hue(NeuronModule):
             # connect to the bridge
             self.b = Bridge(self.bridge_ip)
 
+            # get all groups
+            groups = self.b.get_group()
+
             if self.groups_name is not None:
-                # get all groups
-                groups = self.b.get_group()
                 for group_name in self.groups_name:
                     # get all lights id from in the target group name
                     lights_ids = self._get_lights_id_by_from_group_name(groups, group_name)
@@ -44,6 +47,20 @@ class Hue(NeuronModule):
                     if light is not None:
                         self.switch_light(light["name"])
 
+            if self.light_name is not None:
+                # get the id of the target light by its name
+                light = self.b.get_light(self.light_name)
+                if light is not None:
+                    self.switch_light(light["name"])
+
+            if self.group_name is not None:
+                lights_ids = self._get_lights_id_by_from_group_name(groups, self.group_name)
+                # switch status of each light in the group depending on the state
+                logger.debug("Lights id: %s" % lights_ids)
+                if lights_ids is not None:
+                    for light_id in lights_ids:
+                        self.switch_light(int(light_id))
+
     def _is_parameters_ok(self):
         # test bridge ip is set
         if self.bridge_ip is None:
@@ -53,11 +70,13 @@ class Hue(NeuronModule):
         bridge_ip_unicode = self.bridge_ip.decode('utf-8')
         ipaddress.ip_address(bridge_ip_unicode)
 
-        # user must set a group name of a light name
-        if self.groups_name is None and self.lights_name is None:
-            raise MissingParameterException("Hue neuron needs at least a group name or a light name")
+        # user must set at least one parameter that concern group or light name
+        if self.groups_name is None and self.lights_name is None \
+                and self.group_name is None and self.light_name is None:
+            raise MissingParameterException("Hue neuron needs at least one of following parameters: "
+                                            "group_name, light_name, groups_name, lights_name")
 
-        # test group name or lights are a list
+        # test groups_name or lights_name are a list
         if self.groups_name is not None:
             if not isinstance(self.groups_name, list):
                 raise InvalidParameterException(
@@ -65,7 +84,17 @@ class Hue(NeuronModule):
         if self.lights_name is not None:
             if not isinstance(self.lights_name, list):
                 raise InvalidParameterException(
-                    "Hue neuron:  groups_name must be a list")
+                    "Hue neuron:  lights_name must be a list")
+
+        # test groups_name or lights_name are a list
+        if self.group_name is not None:
+            if not isinstance(self.group_name, basestring):
+                raise InvalidParameterException(
+                    "Hue neuron:  group_name must be a string")
+        if self.light_name is not None:
+            if not isinstance(self.light_name, basestring):
+                raise InvalidParameterException(
+                    "Hue neuron:  light_name must be a string")
 
         # test state ok
         if self.state is None:

@@ -1,4 +1,4 @@
-# hue. Under construction. DO NOT INSTALL IT
+# hue
 
 ## Synopsis
 
@@ -20,15 +20,17 @@ python bind_hue_bridge.py
 
 ## Options
 
-The control will be based on group or light's names. You must set `groups_name` or `lights_name` or both parameter.
+You must set at least on of those parameters: `groups_name`, `lights_name`, `group_name`, `light_name`.
 
-| parameter   | required | default | choices | comment                                                |
-|-------------|----------|---------|---------|--------------------------------------------------------|
-| bridge_ip   | YES      |         |         | The IP address of your HUE bridge                      |
-| groups_name | NO       |         |         | List of group's name to switch                         |
-| lights_name | NO       |         |         | List of light's name to switch                         |
-| state       | YES      |         | on, off | Desired state of lights. Can be "on" or "off"          |
-| brightness  | NO       |         | 0-100   | Percentage of brightness of lamps in the target group. |
+| parameter   | required | type    | default | choices | comment                                                |
+|-------------|----------|---------|---------|---------|--------------------------------------------------------|
+| bridge_ip   | YES      | string  |         |         | The IP address of your HUE bridge                      |
+| groups_name | NO       | list    |         |         | List of group's name to switch                         |
+| lights_name | NO       | list    |         |         | List of light's name to switch                         |
+| group_name  | NO       | string  |         |         | Single group name to switch                            |
+| light_name  | NO       | string  |         |         | Single light name to switch                            |
+| state       | YES      | string  |         | on, off | Desired state of lights. Can be "on" or "off"          |
+| brightness  | NO       | integer |         | 0-100   | Percentage of brightness of lamps in the target group. |
 
 ## Return Values
 
@@ -36,20 +38,7 @@ This neuron does not return any value
 
 ## Synapses example
 
-Here we switch on all lights on in the group called "bedroom"
-```yml
- - name: "switch-on-bedroom"
-   signals:
-     - order: "turn the light on in the bedroom"
-   neurons:
-     - hue:
-        bridge_ip: "192.168.0.7"
-        groups_name:
-         - "bedroom"
-        state: "on"
-```
-
-Here we switch off all lights in the group called "hall" and "living-room"
+Switch on all lights in the group called "hall" and "living-room"
 ```yml
  - name: "switch-on-bedroom"
    signals:
@@ -60,10 +49,10 @@ Here we switch off all lights in the group called "hall" and "living-room"
         groups_name:
          - "hall"
          - "living-room"
-        state: "off"
+        state: "on"
 ```
 
-Here we switch on a list of lights and set their brightness to the maximum level
+Switch on a list of lights and set their brightness to the maximum level
 ```yml
  - name: "switch-on-bedroom"
    signals:
@@ -78,9 +67,29 @@ Here we switch on a list of lights and set their brightness to the maximum level
         brighness: 100
 ```
 
+Use input parameter with bracket and a single group name in order control multiple lamps with the same synapse.
+With the following synapse we can say:
+- turn on the kitchen
+- turn on the living room
+- turn on the bedroom
+
+```yml
+- name: "turn-on"
+  signals:
+    - order: "turn on the {{ group_name }}"
+  neurons:
+    - hue:
+        bridge_ip: "192.168.0.7"
+        args: 
+          - group_name  
+        state: "on"        
+```
+
+And the same synapse with state set to "off" can be used to turn off our lights.
+
 ## Notes
 
-> **Note:** Your Kalliope installation must be placed on a device which it's in the same network as the HUE bridge.
+> **Note:** Your Kalliope installation must be placed on a device which is in the same network as the HUE bridge.
 
 > **Note:** The binding between the bridge and Kalliope is based on the IP address. It means that the device that host Kalliope should not changes its IP address.
 Consider the usage of a static IP or a DHCP reservation to be sure you will never change the IP address.
