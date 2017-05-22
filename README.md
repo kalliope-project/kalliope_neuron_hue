@@ -91,8 +91,7 @@ With the following synapse we can say:
   neurons:
     - hue:
         bridge_ip: "192.168.0.7"
-        args: 
-          - group_name  
+        group_name:  "{{ group_name }}"
         state: "on"        
 ```
 
