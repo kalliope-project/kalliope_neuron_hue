@@ -1,9 +1,6 @@
 import ipaddress
 import logging
 from kalliope.core.NeuronModule import NeuronModule, MissingParameterException, InvalidParameterException
-
-
-# TODO: install.yml: ipaddress + phue
 from phue import Bridge
 
 logging.basicConfig()
@@ -67,8 +64,7 @@ class Hue(NeuronModule):
             raise MissingParameterException("Hue neuron needs a bridge_ip")
 
         # test if the ip is a valid ip. The following line will raise an exception
-        bridge_ip_unicode = self.bridge_ip.decode('utf-8')
-        ipaddress.ip_address(bridge_ip_unicode)
+        ipaddress.ip_address(self.bridge_ip)
 
         # user must set at least one parameter that concern group or light name
         if self.groups_name is None and self.lights_name is None \
@@ -88,11 +84,11 @@ class Hue(NeuronModule):
 
         # test groups_name or lights_name are a list
         if self.group_name is not None:
-            if not isinstance(self.group_name, basestring):
+            if not isinstance(self.group_name, str):
                 raise InvalidParameterException(
                     "Hue neuron:  group_name must be a string")
         if self.light_name is not None:
-            if not isinstance(self.light_name, basestring):
+            if not isinstance(self.light_name, str):
                 raise InvalidParameterException(
                     "Hue neuron:  light_name must be a string")
 
@@ -142,7 +138,7 @@ class Hue(NeuronModule):
         self.b.set_light(light_identifier, 'on', boolean_state)
         if boolean_state and self.brightness is not None:
             brightness_number = self.get_brightness_number_from_percent(self.brightness)
-            print brightness_number
+            logger.debug("HUE: Set brightness to %s" % self.brightness)
             self.b.set_light(light_identifier, 'bri', brightness_number)
 
     @staticmethod

@@ -8,3 +8,4 @@
     - name: "Install pip dependencies"
       pip:
         name: phue
+        executable: pip3
